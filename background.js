@@ -305,10 +305,9 @@ async function fetchBatch(count, port, source) {
   const data = await chrome.storage.local.get(cacheKey);
   const cached = data[cacheKey] || [];
   let served = 0;
-  const freshArtworks = [];
 
-  // Serve a few cached items instantly (half the batch) while fresh ones load
-  const cacheServe = Math.min(Math.ceil(count / 2), cached.length);
+  // Serve full batch from cache if we have enough
+  const cacheServe = Math.min(count, cached.length);
   if (cacheServe > 0) {
     const pick = shuffle([...cached]).slice(0, cacheServe);
     for (const art of pick) {
@@ -317,7 +316,7 @@ async function fetchBatch(count, port, source) {
     }
   }
 
-  // Always fetch fresh artworks for the rest (and to rotate the cache)
+  // If cache couldn't fill the batch, fetch the rest live
   const remaining = count - served;
   if (remaining > 0) {
     safeSend(port, {
@@ -326,15 +325,12 @@ async function fetchBatch(count, port, source) {
       total: count,
       message: 'Discovering artworks\u2026',
     });
-  }
 
-  const fetcher =
-    source === 'chicago' ? fetchChicagoArtworks : fetchMetArtworks;
-  const arts = await fetcher(Math.max(remaining, 4));
+    const fetcher =
+      source === 'chicago' ? fetchChicagoArtworks : fetchMetArtworks;
+    const arts = await fetcher(remaining);
 
-  for (const art of arts) {
-    freshArtworks.push(art);
-    if (served < count) {
+    for (const art of arts) {
       safeSend(port, { type: 'artwork', art });
       served++;
     }
@@ -342,9 +338,15 @@ async function fetchBatch(count, port, source) {
 
   safeSend(port, { type: 'done' });
 
-  // Update cache — keep last 50, fresh ones replace old ones
-  const updatedCache = shuffle([...cached, ...freshArtworks]).slice(-80);
-  chrome.storage.local.set({ [cacheKey]: updatedCache });
+  // Replenish cache in the background — fetch fresh ones to rotate stock
+  const fetcher =
+    source === 'chicago' ? fetchChicagoArtworks : fetchMetArtworks;
+  fetcher(8).then((fresh) => {
+    if (fresh.length > 0) {
+      const updatedCache = shuffle([...cached, ...fresh]).slice(-80);
+      chrome.storage.local.set({ [cacheKey]: updatedCache });
+    }
+  }).catch(() => {});
 }
 
 async function silentFetchBatch(count, source) {

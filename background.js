@@ -319,13 +319,6 @@ async function fetchBatch(count, port, source) {
   // If cache couldn't fill the batch, fetch the rest live
   const remaining = count - served;
   if (remaining > 0) {
-    safeSend(port, {
-      type: 'progress',
-      loaded: 0,
-      total: count,
-      message: 'Discovering artworks\u2026',
-    });
-
     const fetcher =
       source === 'chicago' ? fetchChicagoArtworks : fetchMetArtworks;
     const arts = await fetcher(remaining);

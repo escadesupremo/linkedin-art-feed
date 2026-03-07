@@ -1,6 +1,6 @@
 // Art API client — proxies requests through the background service worker
 const MetAPI = (() => {
-  function fetchBatch(count = 12, { onArtwork, onProgress, source } = {}) {
+  function fetchBatch(count = 12, { onArtwork, source } = {}) {
     return new Promise((resolve, reject) => {
       let settled = false;
 
@@ -20,8 +20,6 @@ const MetAPI = (() => {
       port.onMessage.addListener((msg) => {
         if (msg.type === 'artwork' && onArtwork) {
           onArtwork(msg.art);
-        } else if (msg.type === 'progress' && onProgress) {
-          onProgress(msg.loaded, msg.total, msg.message);
         } else if (msg.type === 'done') {
           finish(resolve);
           port.disconnect();

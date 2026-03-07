@@ -263,27 +263,20 @@ html[data-artfeed="on"] #met-art-feed {
   text-align: center;
   padding: 48px 32px;
 }
+.met-art-feed__progress-icon {
+  font-size: 36px;
+  margin-bottom: 12px;
+}
 .met-art-feed__progress-label {
   font-size: 18px;
   font-weight: 600;
   color: #1a1a1a;
+  margin-bottom: 4px;
+}
+.met-art-feed__progress-sublabel {
+  font-size: 13px;
+  color: #888;
   margin-bottom: 20px;
-}
-.met-art-feed__progress-bar {
-  width: 100%;
-  max-width: 360px;
-  height: 8px;
-  background: #e8e0e5;
-  border-radius: 8px;
-  margin: 0 auto 12px;
-  overflow: hidden;
-}
-.met-art-feed__progress-fill {
-  height: 100%;
-  width: 0%;
-  background: linear-gradient(90deg, #6b2d5b, #a855a0);
-  border-radius: 8px;
-  transition: width 0.3s ease-out;
 }
 .met-art-feed__progress-text {
   font-size: 13px;

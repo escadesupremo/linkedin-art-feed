@@ -326,14 +326,37 @@
     }
   }
 
-  // ── Progress Bar ──
+  // ── First-load messages ──
 
-  function updateProgress(loaded, total, message) {
-    const bar = document.getElementById('met-progress-fill');
+  const galleryMessages = [
+    'Opening the vaults\u2026',
+    'Dusting off the frames\u2026',
+    'Checking the lighting\u2026',
+    'Hanging the masterpieces\u2026',
+    'Adjusting the gallery walls\u2026',
+    'Polishing the plaques\u2026',
+    'Inviting the artists\u2026',
+    'Almost ready for viewing\u2026',
+  ];
+  let galleryMsgTimer = null;
+
+  function startGalleryMessages() {
     const text = document.getElementById('met-progress-text');
-    if (bar) bar.style.width = `${Math.round((loaded / total) * 100)}%`;
-    if (text && message) text.textContent = message;
-    else if (text) text.textContent = `${loaded} of ${total} artworks found`;
+    if (!text) return;
+    let index = 0;
+    text.textContent = galleryMessages[0];
+    galleryMsgTimer = setInterval(() => {
+      index++;
+      if (index >= galleryMessages.length) index = 0;
+      text.textContent = galleryMessages[index];
+    }, 3000);
+  }
+
+  function stopGalleryMessages() {
+    if (galleryMsgTimer) {
+      clearInterval(galleryMsgTimer);
+      galleryMsgTimer = null;
+    }
   }
 
   // ── Prefetch next batch in background ──
@@ -398,7 +421,10 @@
     const grid = document.getElementById('met-art-grid');
     const count = 8;
 
-    if (isFirst && progressWrap) progressWrap.style.display = '';
+    if (isFirst && progressWrap) {
+      progressWrap.style.display = '';
+      startGalleryMessages();
+    }
     if (!isFirst && loader) loader.style.display = '';
 
     // Pre-render skeleton placeholders (subsequent loads only)
@@ -443,9 +469,6 @@
           await MetAPI.fetchBatch(needed + 4, {
             source: artSource,
             onArtwork: handleArtwork,
-            onProgress: isFirst
-              ? (loaded, total, msg) => updateProgress(loaded, total, msg)
-              : undefined,
           });
           break;
         } catch (err) {
@@ -470,7 +493,10 @@
       hideEmptyState();
     }
 
-    if (progressWrap) progressWrap.style.display = 'none';
+    if (progressWrap) {
+      progressWrap.style.display = 'none';
+      stopGalleryMessages();
+    }
     if (loader) loader.style.display = 'none';
     isLoading = false;
 
@@ -523,11 +549,10 @@
     el.innerHTML = `
       <div class="met-art-feed__header" id="met-art-header"></div>
       <div class="met-art-feed__progress" id="met-art-progress">
-        <div class="met-art-feed__progress-label">Loading Amazing Art</div>
-        <div class="met-art-feed__progress-bar">
-          <div class="met-art-feed__progress-fill" id="met-progress-fill"></div>
-        </div>
-        <div class="met-art-feed__progress-text" id="met-progress-text">Discovering artworks&hellip;</div>
+        <div class="met-art-feed__progress-icon">\uD83C\uDFDB\uFE0F</div>
+        <div class="met-art-feed__progress-label">First time in the gallery</div>
+        <div class="met-art-feed__progress-sublabel">Curating your first collection&hellip;</div>
+        <div class="met-art-feed__progress-text" id="met-progress-text"></div>
       </div>
       <div class="met-art-feed__grid" id="met-art-grid"></div>
       <div class="met-art-feed__loader" id="met-art-loader" style="display:none">

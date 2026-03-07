@@ -550,8 +550,8 @@
       <div class="met-art-feed__header" id="met-art-header"></div>
       <div class="met-art-feed__progress" id="met-art-progress">
         <div class="met-art-feed__progress-icon">\uD83C\uDFDB\uFE0F</div>
-        <div class="met-art-feed__progress-label">First time in the gallery</div>
-        <div class="met-art-feed__progress-sublabel">Curating your first collection&hellip;</div>
+        <div class="met-art-feed__progress-label">Welcome to the gallery</div>
+        <div class="met-art-feed__progress-sublabel">Curating your collection&hellip;</div>
         <div class="met-art-feed__progress-text" id="met-progress-text"></div>
       </div>
       <div class="met-art-feed__grid" id="met-art-grid"></div>

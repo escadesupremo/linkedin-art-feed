@@ -1,0 +1,579 @@
+/* ── Floating Toolbar (bottom-left, draggable) ── */
+.met-art-toolbar {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  user-select: none;
+}
+.met-art-toolbar--dragging {
+  cursor: grabbing;
+  transition: none !important;
+}
+.met-art-toolbar__btn {
+  background: #6b2d5b;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  transition: background 0.2s;
+}
+.met-art-toolbar__btn:hover {
+  background: #8b3d7b;
+}
+.met-art-toolbar__privacy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  font-size: 16px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.met-art-toolbar__privacy:hover {
+  background: #f0ebe8;
+}
+/* ── Pill Slider Toggle ── */
+.met-art-toolbar__pill {
+  position: relative;
+  display: inline-flex;
+  background: #fff;
+  border: 1.5px solid #6b2d5b;
+  border-radius: 24px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.met-art-toolbar__pill-thumb {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: #6b2d5b;
+  border-radius: 22px;
+  transition: left 0.25s ease, width 0.25s ease;
+  pointer-events: none;
+  z-index: 0;
+}
+.met-art-toolbar__pill-option {
+  position: relative;
+  z-index: 1;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  text-align: center;
+  white-space: nowrap;
+  color: #6b2d5b;
+  transition: color 0.2s;
+  pointer-events: none;
+}
+.met-art-toolbar__pill-option--active {
+  color: #fff;
+}
+.met-art-toolbar__gear {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: #6b2d5b;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.met-art-toolbar__gear:hover {
+  background: #f3ecf1;
+}
+
+/* ── Settings Panel (popover above gear) ── */
+.met-art-toolbar__settings {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.18);
+  min-width: 240px;
+}
+.met-art-toolbar__settings--open {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.met-art-toolbar__settings-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+}
+.met-art-toolbar__key-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.met-art-toolbar__key-input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.met-art-toolbar__key-input:focus {
+  border-color: #6b2d5b;
+}
+.met-art-toolbar__key-save {
+  background: #6b2d5b;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 7px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.met-art-toolbar__key-save:hover {
+  background: #8b3d7b;
+}
+.met-art-toolbar__key-status {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.met-art-toolbar__key-status--saved {
+  color: #22c55e;
+}
+.met-art-toolbar__key-status--error {
+  color: #ef4444;
+}
+.met-art-toolbar__source-row {
+  display: flex;
+  gap: 6px;
+}
+.met-art-toolbar__source-btn {
+  flex: 1;
+  padding: 7px 8px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  background: #fff;
+  color: #555;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.met-art-toolbar__source-btn:hover {
+  border-color: #6b2d5b;
+  color: #6b2d5b;
+}
+.met-art-toolbar__source-btn--active {
+  background: #6b2d5b;
+  border-color: #6b2d5b;
+  color: #fff;
+}
+.met-art-toolbar__source-btn--active:hover {
+  background: #8b3d7b;
+  border-color: #8b3d7b;
+  color: #fff;
+}
+.met-art-toolbar__settings-divider {
+  height: 1px;
+  background: #eee;
+  margin: 4px 0;
+}
+
+/* ── Show/hide (data-attribute on <html>) ── */
+#met-art-feed {
+  display: none;
+  max-width: 728px;
+  margin: 0 auto;
+  padding-top: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+/* Hide LinkedIn feed content and sidebars, keep scaffold structure intact */
+html[data-artfeed="on"] main[aria-label] > *:not(#met-art-feed) {
+  display: none !important;
+}
+html[data-artfeed="on"] .scaffold-layout__aside,
+html[data-artfeed="on"] .scaffold-layout__sidebar {
+  visibility: hidden !important;
+}
+html[data-artfeed="on"] #met-art-feed {
+  display: block !important;
+}
+
+/* ── Header ── */
+.met-art-feed__header {
+  display: flex;
+  justify-content: center;
+  padding: 28px 16px 20px;
+}
+
+/* ── Initial Progress Bar ── */
+.met-art-feed__progress {
+  text-align: center;
+  padding: 48px 32px;
+}
+.met-art-feed__progress-label {
+  font-size: 18px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin-bottom: 20px;
+}
+.met-art-feed__progress-bar {
+  width: 100%;
+  max-width: 360px;
+  height: 8px;
+  background: #e8e0e5;
+  border-radius: 8px;
+  margin: 0 auto 12px;
+  overflow: hidden;
+}
+.met-art-feed__progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #6b2d5b, #a855a0);
+  border-radius: 8px;
+  transition: width 0.3s ease-out;
+}
+.met-art-feed__progress-text {
+  font-size: 13px;
+  color: #888;
+}
+
+/* ── Grid Layout ── */
+.met-art-feed__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  padding: 0 16px 16px;
+}
+
+/* ── Art Card ── */
+.met-art-card {
+  background: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  color: inherit;
+  transition: box-shadow 0.2s, transform 0.2s;
+  position: relative;
+}
+.met-art-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* ── Skeleton Placeholder ── */
+.met-art-card--skeleton .met-art-card__image-wrap {
+  min-height: 200px;
+  background: linear-gradient(90deg, #f0ebe8 25%, #e8e0dd 50%, #f0ebe8 75%);
+  background-size: 200% 100%;
+  animation: met-shimmer 1.5s ease-in-out infinite;
+}
+.met-art-card--skeleton .met-art-card__info {
+  padding: 12px;
+}
+.met-art-card--skeleton .met-art-card__title-placeholder,
+.met-art-card--skeleton .met-art-card__artist-placeholder {
+  height: 14px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #f0ebe8 25%, #e8e0dd 50%, #f0ebe8 75%);
+  background-size: 200% 100%;
+  animation: met-shimmer 1.5s ease-in-out infinite;
+}
+.met-art-card--skeleton .met-art-card__title-placeholder {
+  width: 75%;
+  margin-bottom: 8px;
+}
+.met-art-card--skeleton .met-art-card__artist-placeholder {
+  width: 50%;
+}
+@keyframes met-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.met-art-card__link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
+/* Explain Button */
+.met-art-card__explain {
+  display: block;
+  width: calc(100% - 24px);
+  margin: 0 12px 12px;
+  padding: 7px 0;
+  background: none;
+  border: 1.5px solid #6b2d5b;
+  border-radius: 6px;
+  color: #6b2d5b;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.met-art-card__explain:hover:not(:disabled) {
+  background: #6b2d5b;
+  color: #fff;
+}
+.met-art-card__explain:disabled {
+  border-color: #ccc;
+  color: #ccc;
+  cursor: default;
+}
+
+.met-art-card__image-wrap {
+  position: relative;
+  background: #f0ebe8;
+  min-height: 120px;
+  overflow: hidden;
+}
+.met-art-card__image {
+  width: 100%;
+  height: auto;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.2s ease-in;
+}
+.met-art-card__image--loaded {
+  opacity: 1;
+}
+
+.met-art-card__info {
+  padding: 12px;
+}
+.met-art-card__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+.met-art-card__artist {
+  font-size: 13px;
+  color: #555;
+  margin: 0 0 6px;
+}
+.met-art-card__meta {
+  font-size: 12px;
+  color: #888;
+  margin: 0;
+}
+.met-art-card__meta span + span::before {
+  content: ' · ';
+}
+
+/* ── Empty State ── */
+.met-art-feed__empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 64px 24px;
+}
+.met-art-feed__empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+}
+.met-art-feed__empty-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #6b2d5b;
+  margin: 0 0 8px;
+}
+.met-art-feed__empty-text {
+  font-size: 14px;
+  color: #888;
+  margin: 0 0 20px;
+}
+.met-art-feed__empty-retry {
+  padding: 10px 24px;
+  background: #6b2d5b;
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.met-art-feed__empty-retry:hover {
+  background: #8b3d7b;
+}
+
+/* ── Loader ── */
+.met-art-feed__loader {
+  text-align: center;
+  padding: 32px;
+}
+.met-art-feed__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #e0e0e0;
+  border-top-color: #6b2d5b;
+  border-radius: 50%;
+  animation: met-spin 0.8s linear infinite;
+  margin: 0 auto 8px;
+}
+.met-art-feed__loader-text {
+  font-size: 13px;
+  color: #888;
+}
+@keyframes met-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Explain Modal ── */
+.met-art-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+.met-art-modal--open {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.met-art-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+}
+.met-art-modal__dialog {
+  position: relative;
+  background: #fff;
+  border-radius: 12px;
+  width: 520px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 28px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  animation: met-modal-in 0.2s ease-out;
+}
+@keyframes met-modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.met-art-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #888;
+  cursor: pointer;
+  line-height: 1;
+  padding: 4px;
+}
+.met-art-modal__close:hover {
+  color: #333;
+}
+.met-art-modal__header {
+  margin-bottom: 16px;
+  padding-right: 24px;
+}
+.met-art-modal__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 4px;
+  line-height: 1.3;
+}
+.met-art-modal__artist {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+.met-art-modal__body {
+  line-height: 1.6;
+}
+.met-art-modal__paragraph {
+  font-size: 14px;
+  color: #333;
+  margin: 0 0 12px;
+}
+.met-art-modal__paragraph:last-child {
+  margin-bottom: 0;
+}
+.met-art-modal__spinner-wrap {
+  text-align: center;
+  padding: 24px 0;
+}
+.met-art-modal__tts {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.met-art-modal__tts-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background: none;
+  border: 1.5px solid #6b2d5b;
+  border-radius: 20px;
+  color: #6b2d5b;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.met-art-modal__tts-btn:hover {
+  background: #6b2d5b;
+  color: #fff;
+}
+.met-art-modal__tts-btn--active {
+  background: #6b2d5b;
+  color: #fff;
+}
+.met-art-modal__error {
+  font-size: 13px;
+  color: #ef4444;
+  margin: 0;
+}

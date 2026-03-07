@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>LinkedIn Art Feed</h1>
+      <p class="subtitle">The Metropolitan Museum of Art</p>
+    </header>
+
+    <div class="status" id="status">
+      <span class="status-dot"></span>
+      <span class="status-text" id="status-text">Checking&hellip;</span>
+    </div>
+
+    <label class="toggle-row">
+      <span>Show Art Feed</span>
+      <span class="switch">
+        <input type="checkbox" id="toggle" />
+        <span class="slider"></span>
+      </span>
+    </label>
+
+    <div class="api-key-section">
+      <label class="api-key-label" for="gemini-key">Gemini API Key</label>
+      <div class="api-key-row">
+        <input type="password" id="gemini-key" placeholder="Paste your free API key" />
+        <button id="save-key" class="save-key-btn">Save</button>
+      </div>
+      <p class="api-key-hint">
+        Free from <a href="https://aistudio.google.com/apikey" target="_blank">Google AI Studio</a>
+        &mdash; enables &ldquo;Explain&rdquo; on artworks
+      </p>
+      <p class="api-key-status" id="key-status"></p>
+    </div>
+
+    <p class="description">
+      Replaces your LinkedIn feed with public domain masterworks from
+      The Met's collection of 470,000+ artworks.
+    </p>
+
+    <footer>
+      <a href="https://metmuseum.github.io/" target="_blank">Met Open Access API</a>
+    </footer>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -645,7 +645,11 @@
                placeholder="Paste your key" />
         <button id="met-art-key-save" class="met-art-toolbar__key-save">Save</button>
       </div>
-      <span id="met-art-key-status" class="met-art-toolbar__key-status"></span>`;
+      <span id="met-art-key-status" class="met-art-toolbar__key-status"></span>
+      <a class="met-art-toolbar__key-hint" href="https://www.youtube.com/watch?v=prrb0hsfI60" target="_blank" rel="noopener noreferrer">
+        <svg class="met-art-toolbar__yt-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21.8 8.001a2.75 2.75 0 0 0-1.94-1.93C18.12 5.5 12 5.5 12 5.5s-6.12 0-7.86.57A2.75 2.75 0 0 0 2.2 8.001 28.7 28.7 0 0 0 1.75 12a28.7 28.7 0 0 0 .45 3.999 2.75 2.75 0 0 0 1.94 1.93c1.74.57 7.86.57 7.86.57s6.12 0 7.86-.57a2.75 2.75 0 0 0 1.94-1.93A28.7 28.7 0 0 0 22.25 12a28.7 28.7 0 0 0-.45-3.999ZM9.75 15.02V8.98L15.5 12l-5.75 3.02Z"/></svg>
+        Click here to learn how you can get a Gemini API Key for free
+      </a>`;
 
     // Privacy policy link
     const privacy = document.createElement('a');

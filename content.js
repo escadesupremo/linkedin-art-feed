@@ -72,6 +72,15 @@
     if (earlyHide) earlyHide.remove();
 
     updateToggleText();
+
+    // Recalculate pill layout after feed becomes visible (offsetLeft/offsetWidth
+    // are 0 while the feed is display:none, so we must re-measure once shown)
+    if (show) {
+      requestAnimationFrame(() => {
+        const pillEl = document.getElementById('met-art-source-pill');
+        if (pillEl?._updateUI) pillEl._updateUI(artSource);
+      });
+    }
   }
 
   // ── Gemini API (via background) ──
@@ -647,6 +656,11 @@
 
     // Expose updatePillUI for switchSource/init
     pill._updateUI = updatePillUI;
+
+    // Auto-recalculate thumb when the pill's layout changes (e.g. after
+    // toggling between LinkedIn feed and art feed, or LinkedIn reflows)
+    const pillObserver = new ResizeObserver(() => updatePillUI(artSource));
+    pillObserver.observe(pill);
 
     // Gear button
     const gear = document.createElement('button');

@@ -203,6 +203,224 @@
     if (modal) modal.classList.remove('met-art-modal--open');
   }
 
+  // ── Image Viewer Modal ──
+
+  function ensureImageViewer() {
+    if (document.getElementById('met-image-viewer')) return;
+
+    const viewer = document.createElement('div');
+    viewer.id = 'met-image-viewer';
+    viewer.className = 'met-image-viewer';
+    viewer.innerHTML = `
+      <div class="met-image-viewer__backdrop"></div>
+      <div class="met-image-viewer__container">
+        <button class="met-image-viewer__close">&times;</button>
+        <div class="met-image-viewer__canvas" tabindex="0">
+          <img class="met-image-viewer__img" draggable="false" />
+        </div>
+        <div class="met-image-viewer__footer">
+          <div class="met-image-viewer__info">
+            <h3 class="met-image-viewer__title"></h3>
+            <p class="met-image-viewer__artist"></p>
+            <p class="met-image-viewer__meta"></p>
+          </div>
+          <div class="met-image-viewer__actions">
+            <div class="met-image-viewer__zoom-controls">
+              <button class="met-image-viewer__zoom-btn" data-zoom="out" title="Zoom out">&minus;</button>
+              <span class="met-image-viewer__zoom-level">100%</span>
+              <button class="met-image-viewer__zoom-btn" data-zoom="in" title="Zoom in">&plus;</button>
+              <button class="met-image-viewer__zoom-btn" data-zoom="reset" title="Reset zoom">Reset</button>
+            </div>
+            <a class="met-image-viewer__museum-link" href="#" target="_blank" rel="noopener noreferrer">View on Museum Site &#8599;</a>
+          </div>
+        </div>
+      </div>`;
+
+    document.body.appendChild(viewer);
+
+    // State
+    let scale = 1;
+    let panX = 0;
+    let panY = 0;
+    let isDragging = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let startPanX = 0;
+    let startPanY = 0;
+    const MIN_SCALE = 0.5;
+    const MAX_SCALE = 8;
+
+    const img = viewer.querySelector('.met-image-viewer__img');
+    const canvas = viewer.querySelector('.met-image-viewer__canvas');
+    const zoomLabel = viewer.querySelector('.met-image-viewer__zoom-level');
+
+    function applyTransform() {
+      img.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+      zoomLabel.textContent = `${Math.round(scale * 100)}%`;
+    }
+
+    function resetView() {
+      scale = 1;
+      panX = 0;
+      panY = 0;
+      applyTransform();
+    }
+
+    function zoomAt(clientX, clientY, factor) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = clientX - rect.left - rect.width / 2;
+      const cy = clientY - rect.top - rect.height / 2;
+
+      const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, scale * factor));
+      const ratio = newScale / scale;
+
+      panX = cx - ratio * (cx - panX);
+      panY = cy - ratio * (cy - panY);
+      scale = newScale;
+      applyTransform();
+    }
+
+    // Wheel zoom
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.15 : 1 / 1.15;
+      zoomAt(e.clientX, e.clientY, factor);
+    }, { passive: false });
+
+    // Button zoom
+    viewer.querySelectorAll('.met-image-viewer__zoom-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.zoom;
+        if (action === 'reset') return resetView();
+        const rect = canvas.getBoundingClientRect();
+        const factor = action === 'in' ? 1.4 : 1 / 1.4;
+        zoomAt(rect.left + rect.width / 2, rect.top + rect.height / 2, factor);
+      });
+    });
+
+    // Pan via mouse drag
+    canvas.addEventListener('mousedown', (e) => {
+      if (e.button !== 0) return;
+      isDragging = true;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      startPanX = panX;
+      startPanY = panY;
+      canvas.style.cursor = 'grabbing';
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      panX = startPanX + (e.clientX - dragStartX);
+      panY = startPanY + (e.clientY - dragStartY);
+      applyTransform();
+    });
+
+    window.addEventListener('mouseup', () => {
+      if (!isDragging) return;
+      isDragging = false;
+      canvas.style.cursor = '';
+    });
+
+    // Touch pinch-to-zoom and pan
+    let lastTouchDist = 0;
+    let lastTouchCenter = null;
+
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        lastTouchDist = Math.hypot(dx, dy);
+        lastTouchCenter = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+        };
+      } else if (e.touches.length === 1) {
+        isDragging = true;
+        dragStartX = e.touches[0].clientX;
+        dragStartY = e.touches[0].clientY;
+        startPanX = panX;
+        startPanY = panY;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy);
+        const center = {
+          x: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+          y: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+        };
+        if (lastTouchDist > 0) {
+          zoomAt(center.x, center.y, dist / lastTouchDist);
+        }
+        lastTouchDist = dist;
+        lastTouchCenter = center;
+      } else if (e.touches.length === 1 && isDragging) {
+        panX = startPanX + (e.touches[0].clientX - dragStartX);
+        panY = startPanY + (e.touches[0].clientY - dragStartY);
+        applyTransform();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+      isDragging = false;
+      lastTouchDist = 0;
+      lastTouchCenter = null;
+    });
+
+    // Double-click to toggle zoom
+    canvas.addEventListener('dblclick', (e) => {
+      if (scale > 1.05) {
+        resetView();
+      } else {
+        zoomAt(e.clientX, e.clientY, 3);
+      }
+    });
+
+    // Close handlers
+    function closeImageViewer() {
+      viewer.classList.remove('met-image-viewer--open');
+      resetView();
+    }
+
+    viewer.querySelector('.met-image-viewer__backdrop').addEventListener('click', closeImageViewer);
+    viewer.querySelector('.met-image-viewer__close').addEventListener('click', closeImageViewer);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && viewer.classList.contains('met-image-viewer--open')) {
+        closeImageViewer();
+      }
+    });
+
+    // Store resetView so openImageViewer can call it
+    viewer._resetView = resetView;
+  }
+
+  function openImageViewer(art) {
+    ensureImageViewer();
+    const viewer = document.getElementById('met-image-viewer');
+    const img = viewer.querySelector('.met-image-viewer__img');
+
+    img.src = art.image;
+    img.alt = art.title;
+    viewer.querySelector('.met-image-viewer__title').textContent = art.title;
+    viewer.querySelector('.met-image-viewer__artist').textContent = art.artist || '';
+
+    const metaParts = [art.date, art.medium].filter(Boolean);
+    viewer.querySelector('.met-image-viewer__meta').textContent = metaParts.join(' · ');
+
+    const link = viewer.querySelector('.met-image-viewer__museum-link');
+    link.href = art.url;
+
+    viewer._resetView();
+    viewer.classList.add('met-image-viewer--open');
+  }
+
   async function openExplainModal(art) {
     ensureModal();
     const modal = document.getElementById('met-art-modal');
@@ -257,7 +475,7 @@
     const card = document.createElement('div');
     card.className = 'met-art-card';
     card.innerHTML = `
-      <a class="met-art-card__link" href="${esc(art.url)}" target="_blank" rel="noopener noreferrer">
+      <div class="met-art-card__link" role="button" tabindex="0" data-url="${esc(art.url)}">
         <div class="met-art-card__image-wrap">
           <img class="met-art-card__image"
                src="${esc(art.image)}"
@@ -272,8 +490,10 @@
             ${art.medium ? `<span>${esc(art.medium)}</span>` : ''}
           </p>
         </div>
-      </a>
+      </div>
       <button class="met-art-card__explain" title="Explain this artwork">Explain</button>`;
+
+    card.querySelector('.met-art-card__link').addEventListener('click', () => openImageViewer(art));
 
     setupExplainBtn(card.querySelector('.met-art-card__explain'), art);
 
@@ -306,7 +526,7 @@
   function fillCard(skeleton, art) {
     skeleton.className = 'met-art-card';
     skeleton.innerHTML = `
-      <a class="met-art-card__link" href="${esc(art.url)}" target="_blank" rel="noopener noreferrer">
+      <div class="met-art-card__link" role="button" tabindex="0" data-url="${esc(art.url)}">
         <div class="met-art-card__image-wrap">
           <img class="met-art-card__image"
                src="${esc(art.image)}"
@@ -321,9 +541,10 @@
             ${art.medium ? `<span>${esc(art.medium)}</span>` : ''}
           </p>
         </div>
-      </a>
+      </div>
       <button class="met-art-card__explain" title="Explain this artwork">Explain</button>`;
 
+    skeleton.querySelector('.met-art-card__link').addEventListener('click', () => openImageViewer(art));
     setupExplainBtn(skeleton.querySelector('.met-art-card__explain'), art);
 
     const img = skeleton.querySelector('.met-art-card__image');

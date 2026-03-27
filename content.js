@@ -42,9 +42,8 @@
     if (document.getElementById('met-art-feed')) return;
 
     // Find LinkedIn's main content area
-    const mainEl = document.querySelector('main[aria-label]')
-                || document.querySelector('.scaffold-layout__content')
-                || document.querySelector('.scaffold-layout__main');
+    const mainEl = document.querySelector('main#workspace')
+                || document.querySelector('main');
 
     if (mainEl) {
       mainEl.prepend(artFeedEl);

@@ -9,7 +9,7 @@
 
   var style = document.createElement('style');
   style.id = 'met-art-early-hide';
-  style.textContent = 'main#workspace, main, aside { visibility: hidden !important; }';
+  style.textContent = 'main#workspace, main, aside { visibility: hidden !important; } main#workspace, main { background: #ededea !important; }';
   (document.head || document.documentElement).appendChild(style);
 
   // Safety: remove after 5s if content.js never loads

@@ -150,13 +150,16 @@ function isHttpsUrl(str) {
 }
 
 function metToArtwork(obj) {
-  const img = obj.primaryImageSmall || obj.primaryImage;
+  // Require the small thumbnail — avoids occasionally pulling 5–10MB full-res files
+  // into the feed. Artworks without a small are skipped; the batch retries more IDs.
+  const img = obj.primaryImageSmall;
   if (!img || !isHttpsUrl(img)) return null;
   const fallbackUrl = `https://www.metmuseum.org/art/collection/search/${encodeURIComponent(obj.objectID)}`;
   const url = obj.objectURL && isHttpsUrl(obj.objectURL) ? obj.objectURL : fallbackUrl;
   return {
     id: obj.objectID,
     image: img,
+    fullImage: isHttpsUrl(obj.primaryImage) ? obj.primaryImage : img,
     title: String(obj.title || 'Untitled'),
     artist: String(obj.artistDisplayName || 'Unknown Artist'),
     date: String(obj.objectDate || ''),
@@ -214,9 +217,11 @@ async function fetchChicagoPage(page, limit) {
 
 function chicagoToArtwork(item) {
   if (!item.image_id) return null;
+  const iiif = `${sources.chicago.iiif}/${encodeURIComponent(item.image_id)}`;
   return {
     id: item.id,
-    image: `${sources.chicago.iiif}/${encodeURIComponent(item.image_id)}/full/400,/0/default.jpg`,
+    image: `${iiif}/full/400,/0/default.jpg`,
+    fullImage: `${iiif}/full/1200,/0/default.jpg`,
     title: String(item.title || 'Untitled'),
     artist: String(item.artist_display || 'Unknown Artist'),
     date: String(item.date_display || ''),

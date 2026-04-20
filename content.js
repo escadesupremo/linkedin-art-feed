@@ -37,6 +37,26 @@
 
   // ── Inject art feed into LinkedIn's main content area ──
 
+  function showUpdateBanner() {
+    if (document.getElementById('met-art-update-banner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'met-art-update-banner';
+    banner.className = 'met-art-update-banner';
+    banner.innerHTML = `
+      <div class="met-art-update-banner__icon">⚠️</div>
+      <div class="met-art-update-banner__text">
+        <strong>Oops — LinkedIn changed something!</strong><br>
+        Please update LinkedIn Art Feed to the latest version.
+      </div>
+      <a class="met-art-update-banner__btn"
+         href="https://chromewebstore.google.com/detail/linkedin-art-feed/ibnokmhenmocdlpdghmobbfpfcbfjdok"
+         target="_blank" rel="noopener noreferrer">Update Now</a>
+      <button class="met-art-update-banner__close">&times;</button>`;
+    banner.querySelector('.met-art-update-banner__close')
+      .addEventListener('click', () => banner.remove());
+    document.body.appendChild(banner);
+  }
+
   function injectArtFeed() {
     // Already in the DOM — nothing to do
     if (document.getElementById('met-art-feed')) return;
@@ -48,8 +68,11 @@
     if (mainEl) {
       mainEl.prepend(artFeedEl);
     } else {
-      // Fallback: body-level injection
-      document.body.appendChild(artFeedEl);
+      // LinkedIn changed their DOM — disable art mode so the feed isn't blank
+      document.documentElement.dataset.artfeed = 'off';
+      const earlyHide = document.getElementById('met-art-early-hide');
+      if (earlyHide) earlyHide.remove();
+      showUpdateBanner();
     }
   }
 
@@ -405,7 +428,7 @@
     const viewer = document.getElementById('met-image-viewer');
     const img = viewer.querySelector('.met-image-viewer__img');
 
-    img.src = art.image;
+    img.src = art.fullImage || art.image;
     img.alt = art.title;
     viewer.querySelector('.met-image-viewer__title').textContent = art.title;
     viewer.querySelector('.met-image-viewer__artist').textContent = art.artist || '';
@@ -470,33 +493,43 @@
     });
   }
 
-  function createArtCard(art) {
-    const card = document.createElement('div');
-    card.className = 'met-art-card';
-    card.innerHTML = `
+  function cardInnerHTML(art, seq) {
+    const seqPadded = String(seq).padStart(3, '0');
+    const sourceTag = art.source === 'chicago' ? 'AIC' : 'MET';
+    const accessionId = `${sourceTag}.${esc(String(art.id))}`;
+    const metaParts = [];
+    if (art.date) metaParts.push(`<span>${esc(art.date)}</span>`);
+    if (art.medium) metaParts.push(`<span>${esc(art.medium)}</span>`);
+    if (art.department) metaParts.push(`<span>${esc(art.department)}</span>`);
+    return `
+      <div class="met-art-card__accession">
+        <span class="met-art-card__accession-num">${seqPadded}</span>
+        <div class="met-art-card__accession-id">${accessionId}</div>
+        <span class="met-art-card__accession-source">${sourceTag}</span>
+      </div>
       <div class="met-art-card__link" role="button" tabindex="0" data-url="${esc(art.url)}">
         <div class="met-art-card__image-wrap">
           <img class="met-art-card__image"
                src="${esc(art.image)}"
                alt="${esc(art.title)}"
-               loading="lazy" />
+               loading="lazy"
+               decoding="async" />
         </div>
         <div class="met-art-card__info">
           <h3 class="met-art-card__title">${esc(art.title)}</h3>
           <p class="met-art-card__artist">${esc(art.artist)}</p>
-          <p class="met-art-card__meta">
-            ${art.date ? `<span>${esc(art.date)}</span>` : ''}
-            ${art.medium ? `<span>${esc(art.medium)}</span>` : ''}
-          </p>
+          <p class="met-art-card__meta">${metaParts.join('')}</p>
         </div>
       </div>
-      <button class="met-art-card__explain" title="Explain this artwork">Explain</button>`;
+      <div class="met-art-card__actions">
+        <button class="met-art-card__explain" title="Explain this artwork">Explain</button>
+      </div>`;
+  }
 
+  function wireCard(card, art) {
     card.querySelector('.met-art-card__link').addEventListener('click', () => openImageViewer(art));
-
     setupExplainBtn(card.querySelector('.met-art-card__explain'), art);
 
-    // Fade in image once loaded
     const img = card.querySelector('.met-art-card__image');
     if (img.complete) {
       img.classList.add('met-art-card__image--loaded');
@@ -504,7 +537,13 @@
       img.addEventListener('load', () => img.classList.add('met-art-card__image--loaded'));
       img.addEventListener('error', () => img.classList.add('met-art-card__image--loaded'));
     }
+  }
 
+  function createArtCard(art, seq) {
+    const card = document.createElement('div');
+    card.className = 'met-art-card';
+    card.innerHTML = cardInnerHTML(art, seq);
+    wireCard(card, art);
     return card;
   }
 
@@ -514,58 +553,33 @@
     const card = document.createElement('div');
     card.className = 'met-art-card met-art-card--skeleton';
     card.innerHTML = `
-      <div class="met-art-card__image-wrap"></div>
-      <div class="met-art-card__info">
+      <div class="met-art-card__accession"></div>
+      <div>
+        <div class="met-art-card__image-wrap"></div>
         <div class="met-art-card__title-placeholder"></div>
         <div class="met-art-card__artist-placeholder"></div>
-      </div>`;
+      </div>
+      <div class="met-art-card__actions"></div>`;
     return card;
   }
 
-  function fillCard(skeleton, art) {
+  function fillCard(skeleton, art, seq) {
     skeleton.className = 'met-art-card';
-    skeleton.innerHTML = `
-      <div class="met-art-card__link" role="button" tabindex="0" data-url="${esc(art.url)}">
-        <div class="met-art-card__image-wrap">
-          <img class="met-art-card__image"
-               src="${esc(art.image)}"
-               alt="${esc(art.title)}"
-               loading="lazy" />
-        </div>
-        <div class="met-art-card__info">
-          <h3 class="met-art-card__title">${esc(art.title)}</h3>
-          <p class="met-art-card__artist">${esc(art.artist)}</p>
-          <p class="met-art-card__meta">
-            ${art.date ? `<span>${esc(art.date)}</span>` : ''}
-            ${art.medium ? `<span>${esc(art.medium)}</span>` : ''}
-          </p>
-        </div>
-      </div>
-      <button class="met-art-card__explain" title="Explain this artwork">Explain</button>`;
-
-    skeleton.querySelector('.met-art-card__link').addEventListener('click', () => openImageViewer(art));
-    setupExplainBtn(skeleton.querySelector('.met-art-card__explain'), art);
-
-    const img = skeleton.querySelector('.met-art-card__image');
-    if (img.complete) {
-      img.classList.add('met-art-card__image--loaded');
-    } else {
-      img.addEventListener('load', () => img.classList.add('met-art-card__image--loaded'));
-      img.addEventListener('error', () => img.classList.add('met-art-card__image--loaded'));
-    }
+    skeleton.innerHTML = cardInnerHTML(art, seq);
+    wireCard(skeleton, art);
   }
 
   // ── First-load messages ──
 
   const galleryMessages = [
-    'Opening the vaults\u2026',
-    'Dusting off the frames\u2026',
-    'Checking the lighting\u2026',
-    'Hanging the masterpieces\u2026',
-    'Adjusting the gallery walls\u2026',
-    'Polishing the plaques\u2026',
-    'Inviting the artists\u2026',
-    'Almost ready for viewing\u2026',
+    'querying open access endpoints',
+    'parsing accession records',
+    'loading IIIF manifests',
+    'streaming images from archive',
+    'building index',
+    'cross-referencing collections',
+    'normalizing metadata',
+    'finalizing batch',
   ];
   let galleryMsgTimer = null;
 
@@ -619,9 +633,9 @@
     el.className = 'met-art-feed__empty';
     el.innerHTML = `
       <div class="met-art-feed__empty-icon">\uD83C\uDFA8</div>
-      <h3 class="met-art-feed__empty-title">Waiting for Art</h3>
-      <p class="met-art-feed__empty-text">The museum APIs are temporarily unavailable. Hang tight.</p>
-      <button class="met-art-feed__empty-retry">Try Again</button>`;
+      <h3 class="met-art-feed__empty-title">CONNECTION LOST</h3>
+      <p class="met-art-feed__empty-text">Museum APIs unavailable. Index cannot be populated at this time.</p>
+      <button class="met-art-feed__empty-retry">Retry</button>`;
     el.querySelector('.met-art-feed__empty-retry').addEventListener('click', () => {
       hideEmptyState();
       firstLoad = true;
@@ -676,10 +690,12 @@
         progressWrap.style.display = 'none';
       }
 
+      const seq = shownIDs.size;
+
       if (isFirst && grid) {
-        grid.appendChild(createArtCard(art));
+        grid.appendChild(createArtCard(art, seq));
       } else if (fillIndex < skeletons.length) {
-        fillCard(skeletons[fillIndex], art);
+        fillCard(skeletons[fillIndex], art, seq);
         fillIndex++;
       }
     }
@@ -743,7 +759,7 @@
       (entries) => {
         if (entries[0].isIntersecting) loadMore();
       },
-      { rootMargin: '400px' }
+      { rootMargin: '600px' }
     );
     scrollObserver.observe(sentinel);
   }
@@ -776,17 +792,28 @@
     const el = document.createElement('div');
     el.id = 'met-art-feed';
     el.innerHTML = `
+      <div class="met-art-feed__masthead">
+        <div class="met-art-feed__masthead-top">
+          <div class="met-art-feed__index-tag">INDEX / PUBLIC DOMAIN</div>
+          <h1 class="met-art-feed__title">ART<span class="met-art-feed__title-slash">/</span>FEED</h1>
+          <div class="met-art-feed__tagline">v1.0 — masterworks, sorted by recency</div>
+        </div>
+      </div>
       <div class="met-art-feed__header" id="met-art-header"></div>
+      <div class="met-art-feed__cols">
+        <div>CATALOG · PUBLIC DOMAIN</div>
+        <div class="met-art-feed__cols-hint">2 × n grid</div>
+      </div>
       <div class="met-art-feed__progress" id="met-art-progress">
         <div class="met-art-feed__progress-icon">\uD83C\uDFDB\uFE0F</div>
-        <div class="met-art-feed__progress-label">Welcome to the gallery</div>
-        <div class="met-art-feed__progress-sublabel">Curating your collection&hellip;</div>
+        <div class="met-art-feed__progress-label">Opening the vaults</div>
+        <div class="met-art-feed__progress-sublabel">Initializing index&hellip;</div>
         <div class="met-art-feed__progress-text" id="met-progress-text"></div>
       </div>
       <div class="met-art-feed__grid" id="met-art-grid"></div>
       <div class="met-art-feed__loader" id="met-art-loader" style="display:none">
         <div class="met-art-feed__spinner"></div>
-        <div class="met-art-feed__loader-text">Loading more art&hellip;</div>
+        <div class="met-art-feed__loader-text">loading records</div>
       </div>
       <div id="met-art-sentinel" style="height:1px"></div>`;
     return el;
@@ -824,8 +851,8 @@
     pill.className = 'met-art-toolbar__pill';
     pill.innerHTML = `
       <div class="met-art-toolbar__pill-thumb" id="met-art-pill-thumb"></div>
-      <span class="met-art-toolbar__pill-option met-art-toolbar__pill-option--active" data-source="met">Metropolitan Museum of Art</span>
-      <span class="met-art-toolbar__pill-option" data-source="chicago">Art Institute of Chicago</span>`;
+      <span class="met-art-toolbar__pill-option met-art-toolbar__pill-option--active" data-source="met">MET</span>
+      <span class="met-art-toolbar__pill-option" data-source="chicago">AIC</span>`;
 
     function updatePillUI(source) {
       const thumb = pill.querySelector('#met-art-pill-thumb');
